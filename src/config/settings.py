@@ -41,6 +41,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # apps DDD
+    'apps.accounts',
+    'apps.transactions',
+    'apps.ledger',
+
+    # channels per websocket
+    'channels',
 ]
 
 MIDDLEWARE = [
