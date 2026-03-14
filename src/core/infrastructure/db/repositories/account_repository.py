@@ -16,7 +16,8 @@ class DjangoAccountRepository(AccountRepository):
             balance=Money(
                 amount=float(model.balance),
                 currency=model.currency
-            )
+            ),
+            is_frozen=model.is_frozen
         )
 
     async def save(self, account: Account) -> None:
@@ -26,8 +27,28 @@ class DjangoAccountRepository(AccountRepository):
             defaults={
                 "owner": account.owner,
                 "balance": account.balance.amount,
-                "currency": account.balance.currency
-            }
+                "currency": account.balance.currency,
+                "is_frozen": account.is_frozen,
+            },
+        )
+
+    async def update(self, account: Account) -> None:
+
+        await AccountModel.objects.filter(id=account.account_id).aupdate(
+            owner=account.owner,
+            balance=account.balance.amount,
+            currency=account.balance.currency,
+            is_frozen=account.is_frozen
+        )
+
+    async def delete(self, account_id: str) -> None:
+
+        await AccountModel.objects.filter(id=account_id).adelete()
+
+    async def freeze(self, account_id: str) -> None:
+
+        await AccountModel.objects.filter(id=account_id).aupdate(
+            is_frozen=True
         )
 
     async def list_all(self):
@@ -44,7 +65,8 @@ class DjangoAccountRepository(AccountRepository):
                     balance=Money(
                         amount=float(model.balance),
                         currency=model.currency
-                    )
+                    ),
+                    is_frozen=model.is_frozen
                 )
             )
 

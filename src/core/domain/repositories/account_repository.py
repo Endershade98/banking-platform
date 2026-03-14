@@ -15,3 +15,15 @@ class AccountRepository(ABC):
     @abstractmethod
     async def list_all(self) -> list[Account]:
         pass
+
+    @abstractmethod
+    async def delete(self, account_id: str) -> None:
+        pass
+
+    @abstractmethod
+    async def update(self, account: Account) -> None:
+        pass
+
+    @abstractmethod
+    async def freeze(self, account_id: str) -> None:
+        pass
