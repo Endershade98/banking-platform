@@ -137,3 +137,13 @@ CHANNEL_LAYERS = {
         },
     },
 }
+
+import sys
+
+if 'pytest' in sys.modules:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': ':memory:',  # database in-memory per test
+        }
+    }
