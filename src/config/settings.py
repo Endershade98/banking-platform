@@ -49,6 +49,10 @@ INSTALLED_APPS = [
 
     # channels per websocket
     'channels',
+
+    # rest framework
+    'rest_framework',
+    'drf_spectacular',
 ]
 
 MIDDLEWARE = [
@@ -147,3 +151,13 @@ if 'pytest' in sys.modules:
             'NAME': ':memory:',  # database in-memory per test
         }
     }
+
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Banking Platform API",
+    "DESCRIPTION": "API per la gestione degli account bancari",
+    "VERSION": "1.0.0",
+}
