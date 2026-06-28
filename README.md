@@ -1,20 +1,22 @@
-# Realtime Banking Platform
+# Account Microservice
 
-Backend banking simulation platform designed with enterprise architecture patterns.
+This microservice is responsible for managing bank accounts for users.  
+It is designed following **Domain-Driven Design (DDD)** and **Clean Architecture** principles.
 
-## Features
+## Responsibilities
 
-- Domain Driven Design architecture
-- Real-time notifications with WebSockets
-- Event-driven transactions
-- Redis caching and pub/sub
-- Dockerized infrastructure
+- Create new accounts
+- Retrieve account information
+- Get account balance
+- Freeze accounts
 
-## Tech Stack
+> Note: Roles and permissions are managed by a separate microservice.
 
-- Django
-- Django Channels
-- Redis
-- PostgreSQL
-- Docker
-- Daphne
+## Quickstart
+
+```bash
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
