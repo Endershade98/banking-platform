@@ -18,3 +18,18 @@ class AccountResponseSerializer(serializers.Serializer):
 class BalanceResponseSerializer(serializers.Serializer):
     balance = serializers.DecimalField(max_digits=12, decimal_places=2)
     currency = serializers.CharField()
+
+class TransferMoneySerializer(serializers.Serializer):
+    from_account_id = serializers.UUIDField()
+    to_account_id = serializers.UUIDField()
+    amount = serializers.DecimalField(max_digits=12, decimal_places=2)
+    currency = serializers.CharField(max_length=3)
+
+class TransactionResponseSerializer(serializers.Serializer):
+    transaction_id = serializers.UUIDField()
+    from_account_id = serializers.UUIDField()
+    to_account_id = serializers.UUIDField()
+    amount = serializers.DecimalField(max_digits=12, decimal_places=2)
+    currency = serializers.CharField(max_length=3)
+    status = serializers.CharField()
+    created_at = serializers.DateTimeField()

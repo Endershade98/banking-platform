@@ -25,5 +25,10 @@ class AccountModel(models.Model):
     
     is_frozen = models.BooleanField(default=False)
 
+    status = models.CharField(
+        max_length=20,
+        default="active"
+    )
+
     class Meta:
         db_table = "accounts"

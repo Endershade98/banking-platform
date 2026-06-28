@@ -1,19 +1,29 @@
+# src/core/interfaces/rest/views.py
+
 from asgiref.sync import async_to_sync
 from rest_framework.exceptions import ValidationError
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
+from core.application.use_cases.freeze_account import FreezeAccountUseCase
 from core.application.use_cases.get_balance import GetBalanceUseCase
 from core.infrastructure.db.repositories.account_repository import DjangoAccountRepository
 from core.application.use_cases.create_account import CreateAccountUseCase
+from core.application.use_cases.transfer_money import TransferMoneyUseCase
+from core.infrastructure.db.repositories.account_repository import DjangoAccountRepository
+from core.infrastructure.db.repositories.transaction_repository import DjangoTransactionRepository
+from core.domain.value_objects.money import Money
 
 from .serializers import (
     BalanceResponseSerializer,
     CreateAccountSerializer,
-    AccountResponseSerializer
+    AccountResponseSerializer,
+    TransferMoneySerializer,
+    TransactionResponseSerializer
 )
 from drf_spectacular.utils import extend_schema
+from core.infrastructure.db.repositories.ledger_repository import DjangoLedgerRepository
 
 
 class CreateAccountView(APIView):
@@ -96,3 +106,98 @@ class GetBalanceView(APIView):
         })
 
         return Response(serializer.data)
+    
+class TransferMoneyView(APIView):
+
+    def post(self, request):
+
+        serializer = TransferMoneySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        account_repo = DjangoAccountRepository()
+        transaction_repo = DjangoTransactionRepository()
+
+        ledger_repo = DjangoLedgerRepository()
+
+        use_case = TransferMoneyUseCase(
+            account_repo,
+            transaction_repo,
+            ledger_repo
+        )
+
+        transaction = async_to_sync(use_case.execute)(
+            from_account_id=serializer.validated_data["from_account_id"],
+            to_account_id=serializer.validated_data["to_account_id"],
+            amount=Money(
+                serializer.validated_data["amount"],
+                serializer.validated_data["currency"],
+            ),
+        )
+
+        response = TransactionResponseSerializer({
+            "transaction_id": transaction.transaction_id,
+            "from_account_id": transaction.from_account_id,
+            "to_account_id": transaction.to_account_id,
+            "amount": transaction.amount.amount,
+            "currency": transaction.amount.currency,
+            "status": transaction.status,
+            "created_at": transaction.created_at,
+        })
+
+        return Response(response.data, status=status.HTTP_201_CREATED)
+    
+class LedgerView(APIView):
+
+    def get(self, request):
+
+        repo = DjangoLedgerRepository()
+
+        entries = async_to_sync(
+            repo.find_all
+        )()
+
+        return Response([
+            {
+                "entry_id": e.entry_id,
+                "account_id": e.account_id,
+                "amount": e.amount,
+                "currency": e.currency,
+                "type": e.entry_type,
+                "transaction_id": e.transaction_id
+            }
+            for e in entries
+        ])
+    
+class FreezeAccountView(APIView):
+
+    def post(self, request, account_id):
+
+        account_repo = DjangoAccountRepository()
+
+        use_case = FreezeAccountUseCase(
+            account_repo
+        )
+
+        account = async_to_sync(
+            use_case.execute
+        )(
+            account_id
+        )
+
+
+        if account is None:
+            return Response(
+                {
+                    "error": "account not found"
+                },
+                status=404
+            )
+
+
+        return Response(
+            {
+                "account_id": str(account.account_id),
+                "status": "frozen"
+            },
+            status=200
+        )

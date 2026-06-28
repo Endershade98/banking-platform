@@ -1,3 +1,5 @@
+# src/core/infrastructure/db/repositories/account_repository.py
+
 from apps.accounts.models import AccountModel
 from core.domain.entities.account import Account
 from core.domain.value_objects.money import Money
@@ -71,3 +73,23 @@ class DjangoAccountRepository(AccountRepository):
             )
 
         return accounts
+    
+    async def find_by_id(self, account_id):
+
+        try:
+            model = await AccountModel.objects.aget(
+                id=account_id
+            )
+
+            return Account(
+                account_id=model.id,
+                owner=model.owner,
+                balance=Money(
+                    model.balance,
+                    model.currency
+                ),
+                is_frozen=model.is_frozen
+            )
+
+        except AccountModel.DoesNotExist:
+            return None

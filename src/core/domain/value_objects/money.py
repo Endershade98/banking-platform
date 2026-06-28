@@ -1,11 +1,18 @@
-# core/domain/value_objects/money.py
+# src/core/domain/value_objects/money.py
+
+from decimal import Decimal
+
 
 class Money:
-    def __init__(self, amount: float, currency: str = "USD"):
-        if amount < 0:
-            raise ValueError("Money amount cannot be negative")
-        self.amount = amount
+
+    def __init__(self, amount, currency: str = "USD"):
+
+        # forcing always Decimal
+        self.amount = Decimal(str(amount))
         self.currency = currency
+
+        if self.amount < 0:
+            raise ValueError("Money amount cannot be negative")
 
     def __add__(self, other):
         if self.currency != other.currency:

@@ -1,6 +1,6 @@
-import logging
-
 import pytest
+from decimal import Decimal
+from core.domain.entities.ledger_entry import LedgerEntry
 from core.domain.entities.transaction import Transaction
 from core.domain.value_objects.money import Money
 
@@ -92,3 +92,44 @@ def test_transaction_completed_at():
             to_account_id="account2",
             amount=Money(-100, "USD"),
         )
+
+@pytest.mark.unit
+def test_transaction_generate_entries():
+    # Setup: creiamo una transaction
+    from_account = "acc_1"
+    to_account = "acc_2"
+    amount = Money(amount=Decimal("100.00"), currency="USD")
+
+    tx = Transaction(
+        from_account_id=from_account,
+        to_account_id=to_account,
+        amount=amount
+    )
+
+    # Non ci sono entries prima di generarle
+    assert tx.entries == []
+
+    # Generiamo ledger entries
+    entries = tx.generate_entries()
+
+    # Verifica che siano due
+    assert len(entries) == 2
+
+    debit, credit = entries
+
+    # Controlliamo i valori
+    assert debit.account_id == from_account
+    assert debit.amount == Decimal("100.00")
+    assert debit.currency == "USD"
+    assert debit.entry_type == "debit"
+    assert debit.transaction_id == tx.transaction_id
+
+    assert credit.account_id == to_account
+    assert credit.amount == Decimal("100.00")
+    assert credit.currency == "USD"
+    assert credit.entry_type == "credit"
+    assert credit.transaction_id == tx.transaction_id
+
+    # Chiamando generate_entries di nuovo non duplica le entries
+    entries2 = tx.generate_entries()
+    assert entries2 is entries  # stesso oggetto

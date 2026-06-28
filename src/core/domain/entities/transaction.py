@@ -3,7 +3,7 @@
 from uuid import uuid4
 from datetime import datetime, UTC
 from core.domain.value_objects.money import Money
-
+from core.domain.entities.ledger_entry import LedgerEntry  # nuova classe
 
 class Transaction:
     def __init__(
@@ -21,12 +21,13 @@ class Transaction:
         self.created_at = datetime.now(UTC)
         self.completed_at = None
 
+        self.entries: list[LedgerEntry] = []  # nuova proprietà
+
         self._validate()
 
     def _validate(self):
         if self.from_account_id == self.to_account_id:
             raise ValueError("Cannot transfer to the same account")
-
         if self.amount.amount <= 0:
             raise ValueError("Transaction amount must be positive")
 
@@ -37,3 +38,36 @@ class Transaction:
     def mark_failed(self):
         self.status = "FAILED"
         self.completed_at = datetime.now(UTC)
+
+    # -----------------------------
+    # NUOVO: genera ledger entries
+    # -----------------------------
+    def generate_entries(self):
+
+        if self.entries:
+            return self.entries
+
+        debit_entry = LedgerEntry(
+            account_id=self.from_account_id,
+            amount=self.amount.amount,
+            currency=self.amount.currency,
+            entry_type="debit",
+            transaction_id=self.transaction_id,
+        )
+
+
+        credit_entry = LedgerEntry(
+            account_id=self.to_account_id,
+            amount=self.amount.amount,
+            currency=self.amount.currency,
+            entry_type="credit",
+            transaction_id=self.transaction_id,
+        )
+
+
+        self.entries = [
+            debit_entry,
+            credit_entry
+        ]
+
+        return self.entries
