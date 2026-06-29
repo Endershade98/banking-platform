@@ -2,6 +2,7 @@
 
 import pytest
 
+from core.domain.entities.transaction_status import TransactionStatus
 from core.domain.services.transaction_service import TransactionService
 from core.domain.entities.account import Account
 from core.domain.value_objects.money import Money
@@ -27,7 +28,7 @@ def test_successful_transfer():
         Money(200, "USD")
     )
 
-    assert transaction.status == "PENDING"
+    assert transaction.status == TransactionStatus.PENDING
 
     # TransactionService crea la transazione,
     # non movimenta direttamente i conti
@@ -57,7 +58,7 @@ def test_transfer_creates_pending_transaction():
     )
 
 
-    assert tx.status == "PENDING"
+    assert tx.status == TransactionStatus.PENDING
 
     assert tx.from_account_id == "account1"
     assert tx.to_account_id == "account2"

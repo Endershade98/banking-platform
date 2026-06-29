@@ -2,7 +2,7 @@
 
 from uuid import uuid4
 from datetime import datetime, UTC
-from core.domain.value_objects.money import Money
+from core.domain.entities.transaction_status import TransactionStatus
 from core.domain.entities.ledger_entry import LedgerEntry  # nuova classe
 
 class Transaction:
@@ -25,7 +25,7 @@ class Transaction:
 
         self.amount = amount
 
-        self.status = "PENDING"
+        self.status = TransactionStatus.PENDING
 
         self.created_at=datetime.now(UTC)
 
@@ -42,11 +42,11 @@ class Transaction:
             raise ValueError("Transaction amount must be positive")
 
     def mark_completed(self):
-        self.status = "COMPLETED"
+        self.status = TransactionStatus.COMPLETED
         self.completed_at = datetime.now(UTC)
 
     def mark_failed(self):
-        self.status = "FAILED"
+        self.status = TransactionStatus.FAILED
         self.completed_at = datetime.now(UTC)
 
     # -----------------------------
