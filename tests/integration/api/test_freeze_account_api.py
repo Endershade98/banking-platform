@@ -7,10 +7,12 @@ from rest_framework.test import APIClient
 from apps.accounts.models import AccountModel
 
 
+
 @pytest.mark.django_db
 def test_freeze_account_api():
 
     client = APIClient()
+
 
     create_response = client.post(
         "/api/accounts",
@@ -22,12 +24,14 @@ def test_freeze_account_api():
         format="json"
     )
 
+
     assert create_response.status_code == 201
+
 
     account_id = create_response.data["account_id"]
 
 
-    response = client.post(
+    response = client.patch(
         f"/api/accounts/{account_id}/freeze"
     )
 
@@ -38,5 +42,6 @@ def test_freeze_account_api():
     account = AccountModel.objects.get(
         id=account_id
     )
+
 
     assert account.is_frozen is True

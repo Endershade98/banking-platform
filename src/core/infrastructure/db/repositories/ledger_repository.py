@@ -5,16 +5,15 @@ from apps.ledger.models import LedgerEntryModel
 from core.domain.entities.ledger_entry import LedgerEntry
 
 
-
 class DjangoLedgerRepository:
 
 
-    async def save(
+    def save_sync(
         self,
-        entry: LedgerEntry
+        entry
     ):
 
-        await LedgerEntryModel.objects.acreate(
+        LedgerEntryModel.objects.create(
 
             account_id=entry.account_id,
 
@@ -26,8 +25,6 @@ class DjangoLedgerRepository:
 
             entry_type=entry.entry_type
         )
-
-
 
     async def find_by_account(
         self,
@@ -59,8 +56,6 @@ class DjangoLedgerRepository:
             )
 
         return result
-
-
 
     async def find_by_transaction(
         self,
@@ -95,8 +90,6 @@ class DjangoLedgerRepository:
 
         return result
 
-
-
     async def find_all(
         self
     ):
@@ -124,5 +117,36 @@ class DjangoLedgerRepository:
                 )
             )
 
+        return result
+    
+    def find_by_account_id_sync(self, account_id):
+
+        result = []
+
+        queryset = LedgerEntryModel.objects.filter(
+            account_id=account_id
+        )
+
+        for row in queryset:
+
+            result.append(
+                LedgerEntry(
+                    account_id=row.account_id,
+                    transaction_id=row.transaction_id,
+                    amount=row.amount,
+                    currency=row.currency,
+                    entry_type=row.entry_type,
+                )
+            )
 
         return result
+
+
+    async def find_by_account_id(
+        self,
+        account_id
+    ):
+
+        return await self.find_by_account(
+            account_id
+        )

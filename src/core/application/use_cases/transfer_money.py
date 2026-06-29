@@ -1,8 +1,11 @@
 # src/core/application/use_cases/transfer_money.py
 
+from asgiref.sync import sync_to_async
+from django.db import transaction
+
 from core.domain.services.transaction_service import TransactionService
-from core.domain.value_objects.money import Money
 from core.domain.services.ledger_service import LedgerService
+
 
 
 class TransferMoneyUseCase:
@@ -12,72 +15,110 @@ class TransferMoneyUseCase:
         self,
         account_repository,
         transaction_repository,
-        ledger_repository=None
+        ledger_repository
     ):
 
         self.account_repository = account_repository
+
         self.transaction_repository = transaction_repository
 
         self.transaction_service = TransactionService()
 
-
-        self.ledger_service = (
-            LedgerService(ledger_repository)
-            if ledger_repository
-            else None
+        self.ledger_service = LedgerService(
+            ledger_repository
         )
-
-
 
     async def execute(
         self,
         from_account_id,
         to_account_id,
-        amount: Money
+        amount,
+        idempotency_key
     ):
 
 
-        from_account = await self.account_repository.get_by_id(
-            from_account_id
+        existing = await sync_to_async(
+            self.transaction_repository
+            .find_by_idempotency_key
+        )(idempotency_key)
+
+
+        if existing:
+
+            return existing
+
+        return await sync_to_async(
+            self._execute_transaction,
+            thread_sensitive=True
+        )(
+            from_account_id,
+            to_account_id,
+            amount,
+            idempotency_key
         )
 
-        to_account = await self.account_repository.get_by_id(
-            to_account_id
-        )
+    def _execute_transaction(
+        self,
+        from_account_id,
+        to_account_id,
+        amount,
+        idempotency_key
+    ):
+
+        with transaction.atomic():
 
 
-        if not from_account or not to_account:
-            raise ValueError(
-                "Account not found"
+            sender = (
+                self.account_repository
+                .get_for_update_sync(
+                    from_account_id
+                )
             )
 
 
-        transaction = self.transaction_service.transfer(
-            from_account,
-            to_account,
-            amount
-        )
-
-
-        await self.account_repository.update(
-            from_account
-        )
-
-        await self.account_repository.update(
-            to_account
-        )
-
-
-        await self.transaction_repository.save(
-            transaction
-        )
-
-
-        if self.ledger_service:
-
-            await self.ledger_service.post_transaction(
-                transaction
+            receiver = (
+                self.account_repository
+                .get_for_update_sync(
+                    to_account_id
+                )
             )
 
 
-        return transaction
+            tx = self.transaction_service.transfer(
+                sender,
+                receiver,
+                amount,
+                idempotency_key
+            )
+
+
+            sender.withdraw(amount)
+
+            receiver.deposit(amount)
+
+
+
+            self.account_repository.update_sync(
+                sender
+            )
+
+
+            self.account_repository.update_sync(
+                receiver
+            )
+
+
+            tx.mark_completed()
+
+
+            self.transaction_repository.save_sync(
+                tx
+            )
+
+
+            self.ledger_service.post_transaction_sync(
+                tx
+            )
+
+
+            return tx

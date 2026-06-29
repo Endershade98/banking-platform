@@ -1,6 +1,8 @@
 # src/core/domain/services/posting_engine.py
 
 from core.domain.entities.journal import Journal
+from core.domain.services.ledger_validator import LedgerValidator
+
 
 
 class PostingEngine:
@@ -9,7 +11,7 @@ class PostingEngine:
     def create_journal(
         self,
         transaction
-    ) -> Journal:
+    ):
 
 
         entries = (
@@ -17,9 +19,12 @@ class PostingEngine:
         )
 
 
-        return Journal(
-            transaction_id=
-                transaction.transaction_id,
+        LedgerValidator.validate(
+            entries
+        )
 
-            entries=entries
+
+        return Journal(
+            transaction.transaction_id,
+            entries
         )

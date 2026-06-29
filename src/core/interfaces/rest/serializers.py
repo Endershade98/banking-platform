@@ -1,3 +1,5 @@
+# src/core/interfaces/rest/serializers.py
+
 from rest_framework import serializers
 
 
@@ -33,3 +35,23 @@ class TransactionResponseSerializer(serializers.Serializer):
     currency = serializers.CharField(max_length=3)
     status = serializers.CharField()
     created_at = serializers.DateTimeField()
+
+class TransferMoneySerializer(serializers.Serializer):
+
+    from_account_id = serializers.UUIDField()
+
+    to_account_id = serializers.UUIDField()
+
+    amount = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2
+    )
+
+    currency = serializers.CharField(
+        max_length=3
+    )
+
+
+    idempotency_key = serializers.CharField(
+        max_length=255
+    )

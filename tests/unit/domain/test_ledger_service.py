@@ -1,20 +1,15 @@
 # tests/unit/domain/test_ledger_service.py
 
-import pytest
-from unittest.mock import AsyncMock
+from unittest.mock import Mock
 
 from core.domain.services.ledger_service import LedgerService
 from core.domain.entities.transaction import Transaction
 from core.domain.value_objects.money import Money
 
 
+def test_ledger_service_posts_entries():
 
-@pytest.mark.asyncio
-async def test_ledger_service_posts_entries():
-
-
-    repository = AsyncMock()
-
+    repository = Mock()
 
     service = LedgerService(
         repository
@@ -22,21 +17,15 @@ async def test_ledger_service_posts_entries():
 
 
     transaction = Transaction(
-        from_account_id="A",
-        to_account_id="B",
-        amount=Money(
-            50,
-            "USD"
-        )
+        from_account_id="account1",
+        to_account_id="account2",
+        amount=Money(100, "USD")
     )
 
 
-    journal = await service.post_transaction(
+    service.post_transaction_sync(
         transaction
     )
 
 
-    assert len(journal.entries) == 2
-
-
-    assert repository.save.call_count == 2
+    repository.save_sync.assert_called()

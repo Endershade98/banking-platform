@@ -6,22 +6,32 @@ from core.domain.value_objects.money import Money
 from core.domain.entities.ledger_entry import LedgerEntry  # nuova classe
 
 class Transaction:
+    
     def __init__(
         self,
-        from_account_id: str,
-        to_account_id: str,
-        amount: Money,
+        from_account_id,
+        to_account_id,
+        amount,
+        idempotency_key=None
     ):
+
         self.transaction_id = str(uuid4())
+
+        self.idempotency_key = idempotency_key
+
         self.from_account_id = from_account_id
+
         self.to_account_id = to_account_id
+
         self.amount = amount
 
-        self.status = "PENDING"  # PENDING | COMPLETED | FAILED
-        self.created_at = datetime.now(UTC)
-        self.completed_at = None
+        self.status = "PENDING"
 
-        self.entries: list[LedgerEntry] = []  # nuova proprietà
+        self.created_at=datetime.now(UTC)
+
+        self.completed_at=None
+
+        self.entries=[]
 
         self._validate()
 

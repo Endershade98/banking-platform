@@ -12,7 +12,12 @@ class Money:
         self.currency = currency
 
         if self.amount < 0:
-            raise ValueError("Money amount cannot be negative")
+            from core.domain.exceptions.account_exceptions import NegativeBalanceError
+
+            if self.amount < 0:
+                raise NegativeBalanceError(
+                    "Balance cannot be negative"
+                )
 
     def __add__(self, other):
         if self.currency != other.currency:

@@ -1,8 +1,40 @@
+# tests/unit/domain/test_transaction_entity.py
+
 import pytest
 from decimal import Decimal
-from core.domain.entities.ledger_entry import LedgerEntry
+
 from core.domain.entities.transaction import Transaction
 from core.domain.value_objects.money import Money
+
+from core.domain.exceptions.account_exceptions import (
+    NegativeBalanceError
+)
+
+
+def test_transaction_negative_amount():
+
+    with pytest.raises(NegativeBalanceError):
+
+        Transaction(
+            from_account_id="account1",
+            to_account_id="account2",
+            amount=Money(-50, "USD"),
+        )
+
+
+def test_transaction_completed_at_only_after_completion():
+
+    transaction = Transaction(
+        from_account_id="account1",
+        to_account_id="account2",
+        amount=Money(100,"USD"),
+    )
+
+    assert transaction.completed_at is None
+
+    transaction.mark_completed()
+
+    assert transaction.completed_at is not None
 
 def test_transaction_creation():
     transaction = Transaction(
@@ -29,15 +61,6 @@ def test_transaction_same_account():
     except ValueError as e:
         assert str(e) == "Cannot transfer to the same account"
 
-def test_transaction_negative_amount():
-    try:
-        transaction = Transaction(
-            from_account_id="account1",
-            to_account_id="account2",
-            amount=Money(-50, "USD"),
-        )
-    except ValueError as e:        
-        assert str(e) == "Money amount cannot be negative"
 
 def test_transaction_id_uniqueness():
     transaction1 = Transaction(
@@ -85,13 +108,6 @@ def test_transaction_status_transitions():
     transaction.mark_failed()
     assert transaction.status == "FAILED"
 
-def test_transaction_completed_at():
-    with pytest.raises(ValueError):
-        transaction = Transaction(
-            from_account_id="account1",
-            to_account_id="account2",
-            amount=Money(-100, "USD"),
-        )
 
 @pytest.mark.unit
 def test_transaction_generate_entries():

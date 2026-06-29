@@ -4,7 +4,7 @@
 - Contains core business entities and value objects
 - Pure logic without side effects
 - Example files:
-  - `core/domain/entities/account.py`
+  - ``
   - `core/domain/value_objects/money.py`
 
 ## Application Layer
