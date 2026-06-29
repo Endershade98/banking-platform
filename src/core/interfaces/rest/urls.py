@@ -8,7 +8,8 @@ from .views import (
     GetBalanceView,
     TransferMoneyView,
     LedgerView,
-    FreezeAccountView
+    FreezeAccountView,
+    CloseAccountView
 )
 
 urlpatterns = [
@@ -16,6 +17,7 @@ urlpatterns = [
     path("accounts/<uuid:account_id>", GetAccountView.as_view()),
     path("accounts/<uuid:account_id>/balance", GetBalanceView.as_view()),
     path("accounts/<uuid:account_id>/freeze", FreezeAccountView.as_view()),
+    path("accounts/<uuid:account_id>/close",CloseAccountView.as_view()),
     path("transactions/transfer", TransferMoneyView.as_view()),
     path("ledger", LedgerView.as_view())   
 ]

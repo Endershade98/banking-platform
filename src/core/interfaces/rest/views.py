@@ -1,11 +1,11 @@
 # src/core/interfaces/rest/views.py
 
 from asgiref.sync import async_to_sync
-from rest_framework.exceptions import ValidationError
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
+from core.application.use_cases.close_account import CloseAccountUseCase
 from core.application.use_cases.freeze_account import FreezeAccountUseCase
 from core.application.use_cases.get_balance import GetBalanceUseCase
 from core.infrastructure.db.repositories.account_repository import DjangoAccountRepository
@@ -41,15 +41,20 @@ class CreateAccountView(APIView):
         repo = DjangoAccountRepository()
         use_case = CreateAccountUseCase(repo)
 
-        try:
-            account = async_to_sync(use_case.execute)(
-                owner=serializer.validated_data["owner"],
-                initial_balance=serializer.validated_data["initial_balance"],
-                currency=serializer.validated_data["currency"],
-            )
-        except ValueError as e:
-            # qui trasformiamo l'errore di business in un 400
-            raise ValidationError({"initial_balance": str(e)})
+    
+        account = async_to_sync(
+            use_case.execute
+        )(
+            owner=
+                serializer.validated_data["owner"],
+
+            initial_balance=
+                serializer.validated_data["initial_balance"],
+
+            currency=
+                serializer.validated_data["currency"],
+        )
+       
 
         response = AccountResponseSerializer({
             "account_id": account.account_id,
@@ -98,7 +103,21 @@ class GetBalanceView(APIView):
         repo = DjangoAccountRepository()
         use_case = GetBalanceUseCase(repo)
 
-        balance = async_to_sync(use_case.execute)(account_id)
+        balance = async_to_sync(
+            use_case.execute
+        )(
+            account_id
+        )
+
+        if balance is None:
+
+            return Response(
+                {
+                    "error":
+                        "ACCOUNT_NOT_FOUND"
+                },
+                status=404
+            )
 
         serializer = BalanceResponseSerializer({
             "balance": balance.amount,
@@ -111,13 +130,25 @@ class TransferMoneyView(APIView):
 
     def post(self, request):
 
-        serializer = TransferMoneySerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        serializer = TransferMoneySerializer(
+            data=request.data
+        )
+
+        serializer.is_valid(
+            raise_exception=True
+        )
+
 
         account_repo = DjangoAccountRepository()
-        transaction_repo = DjangoTransactionRepository()
 
-        ledger_repo = DjangoLedgerRepository()
+        transaction_repo = (
+            DjangoTransactionRepository()
+        )
+
+        ledger_repo = (
+            DjangoLedgerRepository()
+        )
+
 
         use_case = TransferMoneyUseCase(
             account_repo,
@@ -125,26 +156,63 @@ class TransferMoneyView(APIView):
             ledger_repo
         )
 
-        transaction = async_to_sync(use_case.execute)(
-            from_account_id=serializer.validated_data["from_account_id"],
-            to_account_id=serializer.validated_data["to_account_id"],
+
+        transaction = async_to_sync(
+            use_case.execute
+        )(
+            from_account_id=
+                serializer.validated_data[
+                    "from_account_id"
+                ],
+
+            to_account_id=
+                serializer.validated_data[
+                    "to_account_id"
+                ],
+
             amount=Money(
                 serializer.validated_data["amount"],
                 serializer.validated_data["currency"],
             ),
+
+            # NUOVO
+            idempotency_key=
+                serializer.validated_data[
+                    "idempotency_key"
+                ],
         )
 
-        response = TransactionResponseSerializer({
-            "transaction_id": transaction.transaction_id,
-            "from_account_id": transaction.from_account_id,
-            "to_account_id": transaction.to_account_id,
-            "amount": transaction.amount.amount,
-            "currency": transaction.amount.currency,
-            "status": transaction.status,
-            "created_at": transaction.created_at,
-        })
 
-        return Response(response.data, status=status.HTTP_201_CREATED)
+        response = TransactionResponseSerializer(
+            {
+                "transaction_id":
+                    transaction.transaction_id,
+
+                "from_account_id":
+                    transaction.from_account_id,
+
+                "to_account_id":
+                    transaction.to_account_id,
+
+                "amount":
+                    transaction.amount.amount,
+
+                "currency":
+                    transaction.amount.currency,
+
+                "status":
+                    transaction.status,
+
+                "created_at":
+                    transaction.created_at,
+            }
+        )
+
+
+        return Response(
+            response.data,
+            status=status.HTTP_201_CREATED
+        )
     
 class LedgerView(APIView):
 
@@ -170,7 +238,7 @@ class LedgerView(APIView):
     
 class FreezeAccountView(APIView):
 
-    def post(self, request, account_id):
+    def patch(self, request, account_id):
 
         account_repo = DjangoAccountRepository()
 
@@ -200,4 +268,45 @@ class FreezeAccountView(APIView):
                 "status": "frozen"
             },
             status=200
+        )
+    
+class CloseAccountView(APIView):
+
+
+    def patch(
+        self,
+        request,
+        account_id
+    ):
+
+        repo = DjangoAccountRepository()
+
+
+        use_case = CloseAccountUseCase(
+            repo
+        )
+
+
+        account = async_to_sync(
+            use_case.execute
+        )(
+            account_id
+        )
+
+
+        if account is None:
+            return Response(
+                {"error":"not found"},
+                status=404
+            )
+
+
+        return Response(
+            {
+                "account_id":
+                str(account.account_id),
+
+                "status":
+                account.status
+            }
         )

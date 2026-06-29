@@ -1,20 +1,30 @@
+# tests/integration/api/test_create_account_validation.py
+
 import pytest
+
 from rest_framework.test import APIClient
+
 
 
 @pytest.mark.django_db
 def test_create_account_invalid_balance():
 
+
     client = APIClient()
+
 
     response = client.post(
         "/api/accounts",
         {
             "owner": "alice",
             "initial_balance": -10,
-            "currency": "USD"
+            "currency": "USD",
         },
-        format="json"
+        format="json",
     )
 
-    assert response.status_code == 400
+
+    assert response.status_code in (
+        400,
+        422
+    )

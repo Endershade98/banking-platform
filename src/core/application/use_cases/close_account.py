@@ -1,26 +1,34 @@
-# src/core/application/use_cases/freeze_account.py
+# src/core/application/use_cases/close_account.py
 
-class FreezeAccountUseCase:
+class CloseAccountUseCase:
+
 
     def __init__(self, repository):
+
         self.repository = repository
 
 
-    async def execute(self, account_id):
+
+    async def execute(
+        self,
+        account_id
+    ):
 
         account = await self.repository.get_by_id(
             account_id
         )
 
+
         if account is None:
             return None
 
 
-        account.freeze()
+        account.close()
 
 
         await self.repository.update(
             account
         )
+
 
         return account

@@ -15,7 +15,7 @@ class LedgerService:
 
 
 
-    async def post_transaction(
+    def post_transaction_sync(
         self,
         transaction
     ):
@@ -27,7 +27,7 @@ class LedgerService:
 
         for entry in journal.entries:
 
-            await self.repository.save(
+            self.repository.save_sync(
                 entry
             )
 
